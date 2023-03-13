@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../constants/constants.dart';
 
-class ModelsDrowDownWidget extends StatefulWidget {
-  const ModelsDrowDownWidget({super.key});
+class ModelsDropDownWidget extends StatefulWidget {
+  const ModelsDropDownWidget({super.key});
 
   @override
-  State<ModelsDrowDownWidget> createState() => _ModelsDrowDownWidgetState();
+  State<ModelsDropDownWidget> createState() => _ModelsDropDownWidgetState();
 }
 
-class _ModelsDrowDownWidgetState extends State<ModelsDrowDownWidget> {
+class _ModelsDropDownWidgetState extends State<ModelsDropDownWidget> {
   String currentModel = "Model1";
   @override
   Widget build(BuildContext context) {
