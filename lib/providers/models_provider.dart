@@ -29,4 +29,5 @@ class ModelProvider extends ChangeNotifier {
     _currentModel = newModel;
     notifyListeners();
   }
+
 }

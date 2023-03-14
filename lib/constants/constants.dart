@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 Color scaffoldBackgroundColor = const Color(0xFF343541);
 Color cardColor = const Color(0xFF444654);
-String apiKey = "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";
+String apiKey = "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";
 String baseUrl = "https://api.openai.com/v1";
 
 // List<String> models = [

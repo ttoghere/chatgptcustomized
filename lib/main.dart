@@ -1,4 +1,5 @@
 import 'package:chatgptcustomized/constants/constants.dart';
+import 'package:chatgptcustomized/providers/chat_provider.dart';
 import 'package:chatgptcustomized/providers/models_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => ModelProvider(),
         ),
+        ChangeNotifierProvider(
+          create: (context) => ChatProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -27,7 +31,7 @@ class MyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               color: cardColor,
             )),
-        home:  ChatScreen(),
+        home: ChatScreen(),
       ),
     );
   }

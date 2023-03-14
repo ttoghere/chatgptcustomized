@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:chatgptcustomized/models/chat_model.dart';
+import 'package:chatgptcustomized/providers/chat_provider.dart';
 import 'package:chatgptcustomized/providers/models_provider.dart';
 import 'package:chatgptcustomized/services/api_services/api_services.dart';
 import 'package:chatgptcustomized/services/assets_manager.dart';
@@ -20,20 +21,21 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   TextEditingController textEditingController = TextEditingController();
 
-  late ApiServices apiServices;
   late FocusNode focusNode;
+  late ScrollController scrollController;
 
   @override
   void initState() {
     super.initState();
-    apiServices = ApiServices();
     focusNode = FocusNode();
+    scrollController = ScrollController();
   }
 
   @override
   void dispose() {
     textEditingController.dispose();
     focusNode.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -42,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     var modelProvider = Provider.of<ModelProvider>(context);
+    var chatProvider = Provider.of<ChatProvider>(context);
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
@@ -69,6 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
             SizedBox(
               height: modelProvider.isTyping ? 500 : 510,
               child: ListView.builder(
+                controller: scrollController,
                 itemBuilder: (context, index) {
                   var access = chatList[index];
                   return ChatWidget(
@@ -99,7 +103,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: TextField(
                         focusNode: focusNode,
                         controller: textEditingController,
-                        onSubmitted: (value) {},
                         decoration: const InputDecoration.collapsed(
                           hintText: "How can i help you ?",
                           hintStyle: TextStyle(
@@ -110,7 +113,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     IconButton(
                       onPressed: () async {
-                        await sendMessageMethod(modelProvider: modelProvider);
+                        await chatProvider.sendMessageMethod(
+                          context: context,
+                          chatProvider: chatProvider,
+                          modelProvider: modelProvider,
+                          chatList: chatList,
+                          textEditingController: textEditingController,
+                          focusNode: focusNode,
+                          scrollController: scrollController,
+                        );
                       },
                       icon: const Icon(
                         Icons.send,
@@ -125,27 +136,5 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> sendMessageMethod({required ModelProvider modelProvider}) async {
-    try {
-      log("Request has been sent ");
-      modelProvider.changeStatus();
-      setState(() {
-        chatList.add(ChatModel(msg: textEditingController.text, chatIndex: 0));
-        textEditingController.clear();
-        focusNode.unfocus();
-      });
-      chatList.addAll(
-        await apiServices.sendMessage(
-          message: textEditingController.text,
-          modelId: modelProvider.currentModel,
-        ),
-      );
-      setState(() {});
-      modelProvider.changeStatus();
-    } catch (error) {
-      log(error.toString());
-    }
   }
 }
