@@ -1,41 +1,47 @@
 import 'dart:developer';
 
+import 'package:chatgptcustomized/models/chat_model.dart';
+import 'package:chatgptcustomized/providers/models_provider.dart';
 import 'package:chatgptcustomized/services/api_services/api_services.dart';
 import 'package:chatgptcustomized/services/assets_manager.dart';
 import 'package:chatgptcustomized/services/services.dart';
 import 'package:chatgptcustomized/widgets/chat_widget.dart';
-import 'package:chatgptcustomized/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/constants.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({
-    super.key,
-  });
-
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final bool isTyping = false;
-  late TextEditingController textEditingController;
+  TextEditingController textEditingController = TextEditingController();
+
+  late ApiServices apiServices;
+  late FocusNode focusNode;
+
   @override
   void initState() {
-    textEditingController = TextEditingController();
     super.initState();
+    apiServices = ApiServices();
+    focusNode = FocusNode();
   }
 
   @override
   void dispose() {
     textEditingController.dispose();
+    focusNode.dispose();
     super.dispose();
   }
 
+  List<ChatModel> chatList = [];
+
   @override
   Widget build(BuildContext context) {
+    var modelProvider = Provider.of<ModelProvider>(context);
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
@@ -58,68 +64,88 @@ class _ChatScreenState extends State<ChatScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ListView.builder(
+        child: Column(
+          children: [
+            SizedBox(
+              height: modelProvider.isTyping ? 500 : 510,
+              child: ListView.builder(
                 itemBuilder: (context, index) {
-                  var access = chatMessages[index];
+                  var access = chatList[index];
                   return ChatWidget(
-                      msg: access["msg"].toString(),
-                      chatIndex: int.parse(access["chatIndex"].toString()));
+                    msg: access.msg,
+                    chatIndex: access.chatIndex,
+                  );
                 },
-                itemCount: chatMessages.length,
+                itemCount: chatList.length,
                 shrinkWrap: true,
               ),
-              if (isTyping) ...[
-                const SpinKitThreeBounce(
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ],
-              const SizedBox(
-                height: 15,
+            ),
+            if (modelProvider.isTyping) ...[
+              const SpinKitThreeBounce(
+                color: Colors.white,
+                size: 18,
               ),
-              Material(
-                color: cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: textEditingController,
-                          onSubmitted: (value) {},
-                          decoration: const InputDecoration.collapsed(
-                            hintText: "How can i help you ?",
-                            hintStyle: TextStyle(
-                              color: Colors.grey,
-                            ),
+            ],
+            const SizedBox(
+              height: 9,
+            ),
+            Material(
+              color: cardColor,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        focusNode: focusNode,
+                        controller: textEditingController,
+                        onSubmitted: (value) {},
+                        decoration: const InputDecoration.collapsed(
+                          hintText: "How can i help you ?",
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () async {
-                          ApiServices apiServices = ApiServices();
-                          try {
-                            await apiServices.getModels();
-                          } catch (error) {
-                            log(error.toString());
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                        ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        await sendMessageMethod(modelProvider: modelProvider);
+                      },
+                      icon: const Icon(
+                        Icons.send,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> sendMessageMethod({required ModelProvider modelProvider}) async {
+    try {
+      log("Request has been sent ");
+      modelProvider.changeStatus();
+      setState(() {
+        chatList.add(ChatModel(msg: textEditingController.text, chatIndex: 0));
+        textEditingController.clear();
+        focusNode.unfocus();
+      });
+      chatList.addAll(
+        await apiServices.sendMessage(
+          message: textEditingController.text,
+          modelId: modelProvider.currentModel,
+        ),
+      );
+      setState(() {});
+      modelProvider.changeStatus();
+    } catch (error) {
+      log(error.toString());
+    }
   }
 }
