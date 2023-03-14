@@ -74,4 +74,52 @@ class ApiServices extends BaseApiServices {
       rethrow;
     }
   }
+
+  // Send Message using ChatGPT API
+  Future<List<ChatModel>> sendMessageGPT(
+      {required String message, required String modelId}) async {
+    try {
+      log("modelId $modelId");
+      var response = await http.post(
+        Uri.parse("$baseUrl/chat/completions"),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          "Content-Type": "application/json"
+        },
+        body: jsonEncode(
+          {
+            "model": modelId,
+            "messages": [
+              {
+                "role": "user",
+                "content": message,
+              }
+            ],
+          },
+        ),
+      );
+
+      // Map jsonResponse = jsonDecode(response.body);
+      Map jsonResponse = json.decode(response.body);
+      if (jsonResponse['error'] != null) {
+        // print("jsonResponse['error'] ${jsonResponse['error']["message"]}");
+        throw HttpException(jsonResponse['error']["message"]);
+      }
+      List<ChatModel> chatList = [];
+      if (jsonResponse["choices"].length > 0) {
+        // log("jsonResponse[choices]text ${jsonResponse["choices"][0]["text"]}");
+        chatList = List.generate(
+          jsonResponse["choices"].length,
+          (index) => ChatModel(
+            msg: jsonResponse["choices"][index]["message"]["content"],
+            chatIndex: 1,
+          ),
+        );
+      }
+      return chatList;
+    } catch (error) {
+      log("error $error");
+      rethrow;
+    }
+  }
 }

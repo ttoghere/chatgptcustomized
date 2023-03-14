@@ -101,6 +101,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Expanded(
                       child: TextField(
+                        onSubmitted: (value) async {
+                          await chatProvider.sendMessageMethod(
+                            context: context,
+                            modelProvider: modelProvider,
+                            chatList: chatList,
+                            textEditingController: textEditingController,
+                            focusNode: focusNode,
+                            scrollController: scrollController,
+                            chatProvider: chatProvider,
+                          );
+                        },
                         focusNode: focusNode,
                         controller: textEditingController,
                         decoration: const InputDecoration.collapsed(
